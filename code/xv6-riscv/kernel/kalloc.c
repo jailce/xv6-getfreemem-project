@@ -80,3 +80,25 @@ kalloc(void)
     memset((char *)r, 5, PGSIZE); // fill with junk
   return (void *)r;
 }
+
+// Contador de memória livre em bytes
+uint64 count_free_mem(void) { // função do tipo uint64 que retorna a quantidade de memória livre em bytes
+  struct run *r; // Ponteiro para percorrer a lista de páginas livres
+  
+  uint64 num_pages = 0; // Inicializa o contador de páginas livres
+
+  // Adquire o lock para acessar a lista de páginas livres
+  acquire(&kmem.lock); 
+  
+  r = kmem.freelist; // Inicializa o ponteiro com o início da lista de páginas livres
+
+// Laço para percorrer a lista de páginas livres
+  while(r) { 
+    num_pages++; // Incrementa o contador de páginas livres
+    r = r->next; // Avança para a próxima página livre na lista
+  }
+  
+  release(&kmem.lock);  //Libera o lock após terminar de percorrer a lista de páginas livres
+
+  return num_pages * 4096; // 4096 é o tamanho da página (PGSIZE) // Retorna a quantidade de memória livre em bytes
+}
