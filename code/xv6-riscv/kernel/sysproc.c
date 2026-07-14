@@ -8,6 +8,10 @@
 #include "vm.h"
 
 uint64
+sys_getfreemem(void){
+return count_free_mem();
+}
+uint64
 sys_exit(void)
 {
   int n;
