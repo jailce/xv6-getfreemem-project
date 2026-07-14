@@ -80,6 +80,8 @@ kalloc(void)
     memset((char *)r, 5, PGSIZE); // fill with junk
   return (void *)r;
 }
+/* Resolve o cego de memória é a função count_free_mem() que percorre a lista de páginas livres e conta quantas páginas estão disponíveis, 
+multiplicando pelo tamanho da página (4096 bytes) para retornar a quantidade total de memória livre em bytes. */ 
 
 // Contador de memória livre em bytes
 uint64 count_free_mem(void) { // função do tipo uint64 que retorna a quantidade de memória livre em bytes
