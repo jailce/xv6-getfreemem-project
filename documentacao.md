@@ -2,7 +2,10 @@
 
 **Universidade Federal de Uberlândia (UFU)**  
 **Disciplina:** Sistemas Operacionais  
-**Alunos:** Anna, Jailce Fernanda Brito
+**Alunos:**  Anna Julia, Jailce Fernanda Brito, Vitor Martins, Eugenio Marins
+
+### Repositório: https://github.com/jailce/xv6-getfreemem-project
+
 
 ---
 
@@ -23,9 +26,51 @@ No xv6, a memória livre fica guardada numa lista encadeada chamada `freelist`. 
 Para a função existir de verdade e o usuário poder chamar, seguimos o padrão de interrupção do xv6 adicionando as assinaturas nestes arquivos:
 * **`kernel/syscall.h`**: Definimos o número da syscall.
 * **`kernel/syscall.c`**: Mapeamos a função no vetor do kernel.
-* **`user/user.h` e `user/usys.pl`**: Colocamos a assinatura `int getfreemem(void);` para o código de usuário conseguir enxergar a função e gerar o assembly.
+* **`user/user.h` e `user/usys.pl`**: Colocamos a assinatura `int getfreemem(void);` para o código de usuário conseguir enxergar a função.
+
+
+
+### O Teste da Syscall getfreemem()
 
 Para testar, incluímos um programa chamado `teste_mem.c` no Makefile. Ele chama a função, aloca um pouco de memória e chama de novo para ver se o número de páginas diminuiu corretamente.
+A ideia era ver os números do sistema mudando na prática. O código utilizado foi este:
+
+```c
+
+
+int
+main(int argc, char *argv[])
+{
+	// Teste da Syscall getfreemem
+	uint64 antes, depois, apos_liberacao;
+	printf("Iniciando teste da Syscall getfreemem\n");
+
+	antes = getfreemem();
+	// Força a alocação de memória para testar a liberação
+	printf("Memoria livre ANTES da alocacao: %lu bytes\n", antes);
+	printf("Alocando memoria...\n");
+	char *mem1 = malloc(1024 * 1024);
+	char *mem2 = malloc(2 * 1024 * 1024);
+
+	depois = getfreemem();
+	// Teste da liberacao de memoria
+	printf("Memoria livre DEPOIS da alocacao: %lu bytes\n", depois);
+	printf("Liberando memoria...\n");
+	free(mem1);
+	free(mem2);
+	// Verifica a quantidade de memória livre após a liberação
+	apos_liberacao = getfreemem();
+    printf("Memoria livre APOS a liberacao: %lu bytes\n", apos_liberacao);
+	
+	exit(0);
+}
+
+```
+![alt text](image-1.png)
+
+
+
+ O resultado esperado era que, após o free(), o valor voltasse para os 133251072 bytes iniciais, acreditamos que isso ocorre por que o free() não devolve a memoria fisica para o kernel imediatamente, mas só marca virtalmente como livre para ser usado. Contudo, o teste atendeu a demanda de testar a syscall getfreemem(), e seguir com a estratégia do escalonador.
 
 ---
 
@@ -147,7 +192,11 @@ Rodamos o simulador forçando o uso de apenas uma CPU (`make qemu CPUS=1`) para 
 ![Evidência do resultado](image.png)
 
 ### Analisando o resultado
+No xv6 original (Round Robin), esses três filhos iam terminar quase juntos e os "TERMINOU" iam aparecer misturados na tela, porque o kernel ficaria dividindo o tempo entre eles o tempo todo. 
+
+No nosso MLQ, o resultado foi o seguinte: o Filho 8 monopolizou a CPU porque estava na Fila 0. Ninguém mais rodou até ele acabar a conta dele. Só depois que ele morreu, o Filho 10 (Fila 1) teve chance de rodar. O Filho 12, coitado, ficou na Fila 2 esperando todo mundo terminar para só então conseguir processar. Isso provou na prática que o nosso algoritmo respeitou as prioridades.
 
 ---
 
 ## 6. Conclusão
+Conseguimos entregar o que foi pedido no projeto. A função `getfreemem` mostrou que é possível acessar informações de memória de dentro do kernel. A troca do escalonador alterou de vez o comportamento do xv6, mostrando que agora o sistema respeita filas de prioridade e foca nos processos mais importantes, exatamente como vimos nos prints do terminal. Todo o código rodou sem erros ou problemas de estouro de instrução após os últimos ajustes.
