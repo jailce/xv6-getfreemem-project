@@ -26,6 +26,7 @@ int pause(int);
 int uptime(void);
 int sync(void);
 uint64 getfreemem(void);
+int setpriority(int);
 
 // ulib.c
 int stat(const char *, struct stat *);
