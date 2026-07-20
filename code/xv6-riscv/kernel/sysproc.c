@@ -116,9 +116,8 @@ sys_uptime(void)
  
   Implementação da Syscall setpriority
   ------------------------------------
-  Esta função implementa a syscall setpriority, que permite ao usuário definir a prioridade do processo atual.
-  A prioridade é um valor inteiro que pode ser 0 (alta), 1 (média) ou 2 (baixa).
-  A função verifica se o argumento fornecido está dentro dos limites válidos e atualiza a prioridade do processo.
+  Esta função permite que um processo defina sua prioridade no escalonador MLQ. A prioridade deve estar entre 0 (alta), 1 (média) e 2 (baixa).
+  A função resgata o argumento da prioridade, verifica se está dentro dos limites válidos e atualiza o campo de prioridade do processo atual. Se a prioridade estiver fora dos limites, retorna -1 indicando erro.
 ------------------------------------*/
 
 uint64
@@ -126,9 +125,8 @@ sys_setpriority(void)
 {
   int priority;
 
-  // Resgata o argumento inteiro passado pelo usuário
-  if(argint(0, &priority) < 0)
-    return -1;
+  // Resgata o argumento sem checar retorno, pois argint é void
+  argint(0, &priority);
 
   // Garante que a prioridade está dentro dos limites das nossas 3 filas (0, 1 ou 2)
   if(priority < 0 || priority > 2)

@@ -435,19 +435,19 @@ scheduler(void)
 
     int found = 0;
 
-    // MLQ: Loop varrendo de forma decrescente as filas de prioridade (0 -> 1 -> 2)
+    // Tentativa de criar o MLQ: vamos varrer da fila 0 (maior) ate a fila 2 (menor)
     for (int target_priority = 0; target_priority <= 2; target_priority++) {
       for (p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
         
-        // Se o processo for executável E pertencer à fila de prioridade atual
+        // Verifica se o processo quer rodar e se pertence a fila que estamos olhando agora
         if (p->state == RUNNABLE && p->priority == target_priority) {
           p->state = RUNNING;
           c->proc = p;
           swtch(&c->context, &p->context);
 
           c->proc = 0;
-          found = 1;
+          found = 1; // Achamos um processo para rodar nessa fila
         }
         release(&p->lock);
       }
