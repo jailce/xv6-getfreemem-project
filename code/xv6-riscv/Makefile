@@ -148,6 +148,7 @@ UPROGS=\
 	$U/_sync\
 	$U/_zombie\
 	$U/_teste_mem\
+	$U/_teste_esc\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
