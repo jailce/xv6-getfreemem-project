@@ -6,7 +6,7 @@ int
 main(int argc, char *argv[])
 {
 	// Teste da Syscall getfreemem
-	uint64 antes, depois;
+	uint64 antes, depois, apos_liberacao;
 	printf("Iniciando teste da Syscall getfreemem\n");
 
 	antes = getfreemem();
@@ -22,6 +22,9 @@ main(int argc, char *argv[])
 	printf("Liberando memoria...\n");
 	free(mem1);
 	free(mem2);
+	// Verifica a quantidade de memória livre após a liberação
+	apos_liberacao = getfreemem();
+    printf("Memoria livre APOS a liberacao: %lu bytes\n", apos_liberacao);
 	
 	exit(0);
 }
