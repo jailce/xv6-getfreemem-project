@@ -70,16 +70,32 @@ main(int argc, char *argv[])
 }
 
 ```
-![alt text](image-1.png)
 
+<img src="image-1.png"  style="width: 500px;  ">
 
 
  O resultado esperado era que, após o free(), o valor voltasse para os 133251072 bytes iniciais, acreditamos que isso ocorre por que o free() não devolve a memoria fisica para o kernel imediatamente, mas só marca virtalmente como livre para ser usado. Contudo, o teste atendeu a demanda de testar a syscall getfreemem(), e seguir com a estratégia do escalonador.
+
+### Tabela e Gráfico Teste de Alocação (`teste_mem`)
+
+Para facilitar a visualização do comportamento da memória gerenciada pelo kernel durante o teste, os dados coletados na execução foram tabulados abaixo.
+
+| Fase da Execução | Ação Realizada no Código | Memória Livre (Bytes) | Memória Livre (MB) |
+| :--- | :--- | :--- | :--- |
+| **1. Estado Inicial** | Primeira chamada de `getfreemem()` | 133.251.072 | ~ 127 MB |
+| **2. Pós-Alocação** | `malloc(1MB)` + `malloc(2MB)` | 130.105.344 | ~ 124 MB |
+| **3. Pós-Liberação** | `free()` dos blocos alocados | 130.105.344* | ~ 124 MB* |
+
+<img src="image-2.png"  style="width: 500px;  ">
+
 
 ---
 
 ## 3. Escalonador de Múltiplas Filas (MLQ)
 A mudança mais importante foi tirar o Round Robin padrão e colocar um sistema com 3 filas de prioridade (0, 1 e 2). A fila 0 é a mais alta e a 2 é a mais baixa.
+
+
+
 
 ### Estrutura do Processo (`kernel/proc.h` e `kernel/proc.c`)
 Primeiro, tivemos que ensinar o processo a ter uma prioridade. Adicionamos o campo `priority` na estrutura dele:
@@ -193,10 +209,27 @@ Para testar se tudo isso funcionou na prática, criamos o programa `user/teste_e
 
 Rodamos o simulador forçando o uso de apenas uma CPU (`make qemu CPUS=1`) para os resultados ficarem claros. A saída do terminal foi essa:
 
-![Evidência do resultado](image.png)
+ 
+<img src="image.png"  style="width: 400px;  ">
+
+###  Teste do Escalonador (`teste_esc`)
+
+Para provar o funcionamento da prioridade estrita, forçamos a criação de três processos filhos simultâneos realizando cálculos matemáticos, atribuindo-os a filas diferentes usando a nossa syscall `setpriority()`.
+
+| Processo (PID Fictício) | Fila Atribuída | Ordem de Criação (Chegada) | Ordem de Conclusão (Término) | Comportamento Observado |
+| :--- | :--- | :--- | :--- | :--- |
+| **Filho C** | Fila 0 (Alta) | 3º a ser criado | **1º a terminar** | Furou a fila. Monopolizou a CPU imediatamente após sua criação. |
+| **Filho B** | Fila 1 (Média) | 2º a ser criado | **2º a terminar** | Aguardou o Filho C morrer. Executou e bloqueou a fila inferior. |
+| **Filho A** | Fila 2 (Baixa) | 1º a ser criado | **3º a terminar** | Sofreu *starvation* temporário. Só rodou quando o sistema ficou ocioso. |
+
+
 
 ### Analisando o resultado
+
 No xv6 original (Round Robin), esses três filhos iam terminar quase juntos e os "TERMINOU" iam aparecer misturados na tela, porque o kernel ficaria dividindo o tempo entre eles o tempo todo. 
+
+
+<img src="image-3.png"  style="width: 500px;  ">
 
 No nosso MLQ, o resultado foi o seguinte: o Filho 8 monopolizou a CPU porque estava na Fila 0. Ninguém mais rodou até ele acabar a conta dele. Só depois que ele morreu, o Filho 10 (Fila 1) teve chance de rodar. O Filho 12, coitado, ficou na Fila 2 esperando todo mundo terminar para só então conseguir processar. Isso provou na prática que o nosso algoritmo respeitou as prioridades.
 
@@ -210,3 +243,6 @@ Conseguimos entregar o que foi pedido no projeto. A função `getfreemem` mostro
 **SILBERSCHATZ, A.; GALVIN, P. B.; GAGNE, G.** *Sistemas Operacionais com Java*. 9ª Edição. Rio de Janeiro: Elsevier, 2015. (Utilizado como base teórica para a modelagem do escalonador de múltiplas filas - MLQ e conceitos de *starvation*).
 
 **TANENBAUM, A. S.; BOS, H.** *Sistemas Operacionais Modernos*. 4ª Edição. São Paulo: Pearson Education do Brasil, 2016. (Referência para os conceitos fundamentais de gerenciamento de memória física, *heap* e alocação de páginas do sistema).
+
+
+
