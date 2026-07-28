@@ -77,3 +77,5 @@ $ teste_esc
 4. Como sair do emulador
 Para encerrar o xv6 e voltar ao terminal principal do seu sistema, utilize o atalho padrão do QEMU:
 Pressione Ctrl + A, solte as teclas, e em seguida aperte X.
+
+
